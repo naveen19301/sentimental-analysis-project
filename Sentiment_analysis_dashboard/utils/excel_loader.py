@@ -1,34 +1,37 @@
 import pandas as pd
 import os
+from pathlib import Path
 
 # ===============================
-# CONFIG
+# CONFIG (DEPLOYMENT SAFE)
 # ===============================
-EXCEL_FILE = "data/Sentimental_analysis_masked.xlsx"
-
+BASE_DIR = Path(__file__).resolve().parent
+EXCEL_FILE = BASE_DIR / "data" / "Sentimental_analysis_masked.xlsx"
 
 # ===============================
 # PURE DATA LOADER (NO FILTERS)
 # ===============================
 def load_excel_data():
-    if not os.path.exists(EXCEL_FILE):
-        print(f"Error: {EXCEL_FILE} not found.")
+    if not EXCEL_FILE.exists():
+        print(f"❌ File not found: {EXCEL_FILE}")
         return pd.DataFrame()
 
     try:
         # Load the Excel file
         df = pd.read_excel(EXCEL_FILE)
-        
+
         if df.empty:
             return pd.DataFrame()
 
         # ===============================
-        # CLEANING & HEADERS (Consistent with gsheet_loader)
+        # CLEANING & HEADERS
         # ===============================
-        # Ensure column names are stripped of whitespace
-        df.columns = [str(c).strip() if c else f"unnamed_{i}" for i, c in enumerate(df.columns)]
-        
-        # Handle duplicate headers if any (though pandas handles this, we stay consistent)
+        df.columns = [
+            str(c).strip() if c and str(c).strip() else f"unnamed_{i}"
+            for i, c in enumerate(df.columns)
+        ]
+
+        # Handle duplicate headers
         seen = {}
         new_cols = []
         for col in df.columns:
@@ -52,7 +55,7 @@ def load_excel_data():
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
         return df
-        
+
     except Exception as e:
-        print(f"Error loading Excel file: {e}")
+        print(f"❌ Error loading Excel file: {e}")
         return pd.DataFrame()
