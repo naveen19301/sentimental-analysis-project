@@ -5,7 +5,7 @@ from pathlib import Path
 # ===============================
 # CONFIG (DEPLOYMENT SAFE)
 # ===============================
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 EXCEL_FILE = BASE_DIR / "data" / "Sentimental_analysis_masked.xlsx"
 
 # ===============================

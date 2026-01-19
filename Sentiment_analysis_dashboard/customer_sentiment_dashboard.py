@@ -43,7 +43,7 @@ from utils.excel_loader import load_excel_data
 # =====================================================
 # AUTH CONFIG
 # =====================================================
-USERS_FILE = "users.json"
+USERS_FILE = ROOT_DIR / "users.json"
 
 def sha256(s: str) -> str:
     return hashlib.sha256(s.encode()).hexdigest()
