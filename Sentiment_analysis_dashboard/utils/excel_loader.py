@@ -4,7 +4,7 @@ import os
 # ===============================
 # CONFIG
 # ===============================
-EXCEL_FILE = r"C:\Users\Astro\Downloads\requirements\data\Sentimental_analysis_masked.xlsx"
+EXCEL_FILE = r"data\Sentimental_analysis_masked.xlsx"
 
 # ===============================
 # PURE DATA LOADER (NO FILTERS)
