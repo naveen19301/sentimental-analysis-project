@@ -7,12 +7,39 @@ import plotly.graph_objects as go
 # CACHED HELPERS
 # =====================================================
 @st.cache_data(show_spinner=False)
-def cache_groupby(df, group_cols, agg_dict):
-    return df.groupby(group_cols).agg(agg_dict)
+def get_risk_distribution(df_subset, risk_col):
+    if risk_col not in df_subset.columns:
+        return None
+    return df_subset[risk_col].value_counts()
 
 @st.cache_data(show_spinner=False)
-def cache_filter(df, col, values):
-    return df[df[col].isin(values)]
+def get_risk_trends(df_subset, risk_col):
+    if "created" not in df_subset.columns or risk_col not in df_subset.columns:
+        return None
+    trend = df_subset.groupby([df_subset["created"].dt.date, risk_col]).size().reset_index(name="count")
+    trend.columns = ["date", "risk", "count"]
+    return trend
+
+@st.cache_data(show_spinner=False)
+def get_risk_heatmap(df_subset, risk_col):
+    if "Sentiment Label" not in df_subset.columns or risk_col not in df_subset.columns:
+        return None
+    return pd.crosstab(df_subset[risk_col], df_subset["Sentiment Label"])
+
+@st.cache_data(show_spinner=False)
+def get_risk_drivers(df_high_risk):
+    if df_high_risk.empty:
+        return None, None
+    
+    cat_counts = None
+    if "Major Categories" in df_high_risk.columns:
+        cat_counts = df_high_risk["Major Categories"].value_counts().head(15)
+        
+    ch_counts = None
+    if "Channel" in df_high_risk.columns:
+        ch_counts = df_high_risk["Channel"].value_counts()
+        
+    return cat_counts, ch_counts
 
 # =====================================================
 # MAIN PAGE
@@ -86,7 +113,7 @@ def show(df):
 
     with col_l:
         st.markdown("### 🎯 Risk Level Distribution")
-        risk_counts = df[RISK_COL].value_counts()
+        risk_counts = get_risk_distribution(df, RISK_COL)
 
         fig_pie = px.pie(
             values=risk_counts.values,
@@ -106,8 +133,7 @@ def show(df):
     with col_r:
         st.markdown("### 📈 Risk Trend Over Time")
         if "created" in df.columns:
-            trend = df.groupby([df["created"].dt.date, RISK_COL]).size().reset_index(name="count")
-            trend.columns = ["date", "risk", "count"]
+            trend = get_risk_trends(df, RISK_COL)
 
             fig_trend = px.line(
                 trend,
@@ -132,7 +158,7 @@ def show(df):
     st.markdown("### 🔥 Risk vs Sentiment Correlation")
 
     if "Sentiment Label" in df.columns:
-        heat = pd.crosstab(df[RISK_COL], df["Sentiment Label"])
+        heat = get_risk_heatmap(df, RISK_COL)
 
         fig_heat = px.imshow(
             heat,
@@ -155,10 +181,10 @@ def show(df):
 
     if not risk_df.empty:
         col1, col2 = st.columns(2)
+        cats, ch = get_risk_drivers(risk_df)
 
         with col1:
-            if "Major Categories" in risk_df.columns:
-                cats = risk_df["Major Categories"].value_counts().head(15)
+            if cats is not None:
                 fig_cat = px.bar(
                     x=cats.values,
                     y=cats.index,
@@ -170,8 +196,7 @@ def show(df):
                 st.plotly_chart(fig_cat, use_container_width=True)
 
         with col2:
-            if "Channel" in risk_df.columns:
-                ch = risk_df["Channel"].value_counts()
+            if ch is not None:
                 fig_ch = px.bar(
                     x=ch.index,
                     y=ch.values,

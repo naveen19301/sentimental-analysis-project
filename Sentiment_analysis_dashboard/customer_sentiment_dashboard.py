@@ -231,8 +231,11 @@ def main():
     # Hidden anchor at the top of the main area
     st.markdown('<div id="top-anchor"></div>', unsafe_allow_html=True)
     
+    # Robust scroll-to-top component: 
+    # Uses a key based on page state to force re-execution on every navigation
     st.components.v1.html(
         f"""
+        <!-- Page State: {st.session_state.page} -->
         <script>
             function forceScroll() {{
                 const main = window.parent.document.querySelector('section.main');
@@ -245,11 +248,9 @@ def main():
                 }}
             }}
             forceScroll();
-            // Repeat on a slight delay to ensure content is fully loaded
             setTimeout(forceScroll, 50);
             setTimeout(forceScroll, 150);
         </script>
-        <!-- State: {st.session_state.page} -->
         """,
         height=0
     )

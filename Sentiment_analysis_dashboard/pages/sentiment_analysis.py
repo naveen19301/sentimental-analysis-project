@@ -8,8 +8,57 @@ def cache_groupby(df, group_cols, agg_dict):
     return df.groupby(group_cols).agg(agg_dict)
 
 @st.cache_data(show_spinner=False)
-def cache_filter(df, col, values):
-    return df[df[col].isin(values)]
+def get_sentiment_trend(df_subset):
+    if "created" not in df_subset.columns or "Sentiment Label" not in df_subset.columns:
+        return None
+    trend_df = (
+        df_subset.groupby([df_subset["created"].dt.date, "Sentiment Label"])
+        .size()
+        .reset_index(name="count")
+    )
+    trend_df.columns = ["date", "sentiment", "count"]
+    return trend_df
+
+@st.cache_data(show_spinner=False)
+def get_channel_sentiment(df_subset):
+    if "Channel" not in df_subset.columns or "Sentiment Label" not in df_subset.columns:
+        return None
+    return pd.crosstab(df_subset["Channel"], df_subset["Sentiment Label"])
+
+@st.cache_data(show_spinner=False)
+def get_category_counts(df_subset, sentiment_label):
+    if "Major Categories" not in df_subset.columns:
+        return None
+    sub = df_subset[df_subset["Sentiment Label"] == sentiment_label]
+    return sub["Major Categories"].value_counts().head(10)
+
+@st.cache_data(show_spinner=False)
+def get_sentiment_heatmap(df_subset):
+    if "created" not in df_subset.columns or "Sentiment Score" not in df_subset.columns:
+        return None
+    
+    # Create local copy to avoid modifying the original dataframe in cache
+    temp = df_subset.copy()
+    temp["day_of_week"] = temp["created"].dt.day_name()
+    temp["hour"] = temp["created"].dt.hour
+
+    heat = (
+        temp.groupby(["day_of_week", "hour"])["Sentiment Score"]
+        .mean()
+        .reset_index()
+    )
+
+    pivot = heat.pivot(
+        index="day_of_week",
+        columns="hour",
+        values="Sentiment Score"
+    )
+
+    day_order = [
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday", "Sunday"
+    ]
+    return pivot.reindex(day_order)
 
 def show(df):
     st.title("💬 Sentiment Analysis")
@@ -77,12 +126,7 @@ def show(df):
     # SENTIMENT TREND OVER TIME
     # =====================================================
     if "created" in df.columns and "Sentiment Label" in df.columns:
-        trend_df = (
-            df.groupby([df["created"].dt.date, "Sentiment Label"])
-            .size()
-            .reset_index(name="count")
-        )
-        trend_df.columns = ["date", "sentiment", "count"]
+        trend_df = get_sentiment_trend(df)
 
         fig_trend = px.line(
             trend_df,
@@ -122,7 +166,7 @@ def show(df):
 
     with col_right:
         if "Channel" in df.columns and "Sentiment Label" in df.columns:
-            channel_sent = pd.crosstab(df["Channel"], df["Sentiment Label"])
+            channel_sent = get_channel_sentiment(df)
 
             fig_channel = go.Figure()
             for s, c in {
@@ -155,8 +199,7 @@ def show(df):
 
     with col1:
         if "Major Categories" in df.columns:
-            pos_df = df[df["Sentiment Label"] == "Positive"]
-            top_pos = pos_df["Major Categories"].value_counts().head(10)
+            top_pos = get_category_counts(df, "Positive")
 
             fig_pos = px.bar(
                 x=top_pos.values,
@@ -170,8 +213,7 @@ def show(df):
 
     with col2:
         if "Major Categories" in df.columns:
-            neg_df = df[df["Sentiment Label"] == "Negative"]
-            top_neg = neg_df["Major Categories"].value_counts().head(10)
+            top_neg = get_category_counts(df, "Negative")
 
             fig_neg = px.bar(
                 x=top_neg.values,
@@ -189,27 +231,7 @@ def show(df):
     # HEATMAP
     # =====================================================
     if "created" in df.columns and "Sentiment Score" in df.columns:
-        df["day_of_week"] = df["created"].dt.day_name()
-        df["hour"] = df["created"].dt.hour
-
-        heat = (
-            df.groupby(["day_of_week", "hour"])["Sentiment Score"]
-            .mean()
-            .reset_index()
-        )
-
-        pivot = heat.pivot(
-            index="day_of_week",
-            columns="hour",
-            values="Sentiment Score"
-        )
-
-        # Ensure correct weekday order
-        day_order = [
-            "Monday", "Tuesday", "Wednesday",
-            "Thursday", "Friday", "Saturday", "Sunday"
-        ]
-        pivot = pivot.reindex(day_order)
+        pivot = get_sentiment_heatmap(df)
 
         fig_heat = px.imshow(
             pivot,

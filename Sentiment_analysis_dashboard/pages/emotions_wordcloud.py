@@ -16,10 +16,32 @@ NEGATIVE_EMOTIONS = ["angry", "frustrated", "disappointed", "concerned"]
 NEUTRAL_EMOTION = "neutral"
 
 # =====================================================
-# WORD CLOUD GENERATOR
+# CACHED COMPUTATIONS
 # =====================================================
-def generate_wordcloud(texts, colormap="Oranges"):
-    text = " ".join(texts.dropna().astype(str))
+@st.cache_data(show_spinner=False)
+def get_emotion_counts(df_subset):
+    return df_subset["Emotion"].value_counts()
+
+@st.cache_data(show_spinner=False)
+def get_emotion_trends(df_subset):
+    if "created" not in df_subset.columns:
+        return None
+    trend = (
+        df_subset.groupby([df_subset["created"].dt.date, "Emotion"])
+        .size()
+        .reset_index(name="count")
+    )
+    return trend
+
+@st.cache_data(show_spinner=False)
+def get_emotion_heat(df_subset):
+    return pd.crosstab(df_subset["Emotion"], df_subset["Sentiment Label"])
+
+@st.cache_data(show_spinner=False)
+def generate_wordcloud(texts_series, colormap="Oranges"):
+    # Convert to list or hashable if needed, but Series usually works if index is stable
+    # To be safest with caching, we'll join text first and cache that or use the series directly
+    text = " ".join(texts_series.dropna().astype(str))
 
     if not text.strip():
         return None
@@ -80,7 +102,7 @@ def show(df):
     # =====================================================
     st.markdown("### 🎭 Emotion Distribution")
 
-    emotion_counts = df["Emotion"].value_counts()
+    emotion_counts = get_emotion_counts(df)
 
     col1, col2 = st.columns([2, 1])
 
@@ -108,11 +130,7 @@ def show(df):
     # EMOTION TRENDS
     # =====================================================
     if "created" in df.columns:
-        trend = (
-            df.groupby([df["created"].dt.date, "Emotion"])
-            .size()
-            .reset_index(name="count")
-        )
+        trend = get_emotion_trends(df)
 
         fig_trend = px.line(
             trend,
@@ -199,7 +217,7 @@ def show(df):
     # =====================================================
     st.markdown("### 🔥 Emotion vs Sentiment Heatmap")
 
-    heat = pd.crosstab(df["Emotion"], df["Sentiment Label"])
+    heat = get_emotion_heat(df)
 
     fig_heat = px.imshow(
         heat,

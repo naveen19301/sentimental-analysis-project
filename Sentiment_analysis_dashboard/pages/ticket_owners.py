@@ -4,6 +4,38 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 
+@st.cache_data(show_spinner=False)
+def get_owner_volume(df_subset):
+    if "Ticket Owner" not in df_subset.columns:
+        return None
+    return df_subset["Ticket Owner"].value_counts().head(20)
+
+@st.cache_data(show_spinner=False)
+def get_owner_performance(df_subset):
+    if "Ticket Owner" not in df_subset.columns:
+        return None
+    
+    owner_perf = df_subset.groupby("Ticket Owner").agg(
+        Avg_Resolution=("resolution_hours", "mean"),
+        Avg_Sentiment=("sentiment_score", "mean"),
+        Ticket_Count=("Ticket Id", "count"),
+        Positive_Rate=("sentiment_label", lambda x: (x == "Positive").mean() * 100)
+    ).reset_index()
+
+    return owner_perf.nlargest(30, "Ticket_Count")
+
+@st.cache_data(show_spinner=False)
+def get_agent_stats_table(df_subset):
+    if "Ticket Owner" not in df_subset.columns:
+        return None
+    
+    return df_subset.groupby("Ticket Owner").agg(
+        Total_Tickets=("Ticket Id", "count"),
+        Avg_Resolution=("resolution_hours", "mean"),
+        Avg_Sentiment=("sentiment_score", "mean"),
+        Reopened=("Number of Reopen", lambda x: (x > 0).sum())
+    ).reset_index()
+
 # =====================================================
 # SAFE DATA NORMALIZATION (DO NOT REMOVE)
 # =====================================================
@@ -84,7 +116,8 @@ def show(df):
     # =====================================================
     # TICKET VOLUME BY OWNER
     # =====================================================
-    owner_counts = df["Ticket Owner"].value_counts().head(20)
+    st.markdown("### 📊 Agent Volume")
+    owner_counts = get_owner_volume(df)
 
     fig_owner_vol = px.bar(
         x=owner_counts.values,
@@ -102,14 +135,7 @@ def show(df):
     # =====================================================
     # PERFORMANCE MATRIX
     # =====================================================
-    owner_perf = df.groupby("Ticket Owner").agg(
-        Avg_Resolution=("resolution_hours", "mean"),
-        Avg_Sentiment=("sentiment_score", "mean"),
-        Ticket_Count=("Ticket Id", "count"),
-        Positive_Rate=("sentiment_label", lambda x: (x == "Positive").mean() * 100)
-    ).reset_index()
-
-    owner_perf = owner_perf.nlargest(30, "Ticket_Count")
+    owner_perf = get_owner_performance(df)
 
     fig_matrix = px.scatter(
         owner_perf,
@@ -176,12 +202,7 @@ def show(df):
     # =====================================================
     # DETAILED AGENT TABLE
     # =====================================================
-    agent_table = df.groupby("Ticket Owner").agg(
-        Total_Tickets=("Ticket Id", "count"),
-        Avg_Resolution=("resolution_hours", "mean"),
-        Avg_Sentiment=("sentiment_score", "mean"),
-        Reopened=("Number of Reopen", lambda x: (x > 0).sum())
-    ).reset_index()
+    agent_table = get_agent_stats_table(df)
 
     st.dataframe(agent_table.round(2), use_container_width=True, height=420)
 

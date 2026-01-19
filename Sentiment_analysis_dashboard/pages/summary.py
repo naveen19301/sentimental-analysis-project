@@ -9,8 +9,49 @@ def cache_groupby(df, group_cols, agg_dict):
     return df.groupby(group_cols).agg(agg_dict)
 
 @st.cache_data(show_spinner=False)
-def cache_filter(df, col, values):
-    return df[df[col].isin(values)]
+def get_classification_stats(df_subset):
+    total = len(df_subset)
+    if total == 0:
+        return 0, 0, 0, 0
+    
+    measurable = (
+        df_subset[df_subset["processing_status"].astype(str).str.strip() == "Completed"].shape[0]
+        if "processing_status" in df_subset.columns else 0
+    )
+
+    immeasurable = (
+        df_subset[df_subset["processing_status"].astype(str).str.strip() == "Completed - No Inbound"].shape[0]
+        if "processing_status" in df_subset.columns else 0
+    )
+
+    rate = (measurable / total * 100)
+    return total, measurable, immeasurable, rate
+
+@st.cache_data(show_spinner=False)
+def get_summary_kpis(df_meas):
+    if len(df_meas) == 0:
+        return 0, 0, 0, 0, 0
+    
+    pos = (df_meas["Sentiment Label"] == "Positive").sum()
+    neu = (df_meas["Sentiment Label"] == "Neutral").sum()
+    neg = (df_meas["Sentiment Label"] == "Negative").sum()
+    
+    res = df_meas["resolution_hours"].mean() if "resolution_hours" in df_meas.columns else 0
+    sent = df_meas["Sentiment Score"].mean() if "Sentiment Score" in df_meas.columns else 0
+    
+    return pos, neu, neg, res, sent
+
+@st.cache_data(show_spinner=False)
+def get_summary_trends(df_subset):
+    if "created" not in df_subset.columns:
+        return None
+    return df_subset.groupby(df_subset["created"].dt.date).size().reset_index(name="count")
+
+@st.cache_data(show_spinner=False)
+def get_lob_performance(df_subset):
+    if "LOB" not in df_subset.columns:
+        return None
+    return df_subset["LOB"].value_counts().head(10)
 
 def premium_kpi_card(title, value, subtitle="", icon=""):
     st.markdown(f"""
@@ -65,19 +106,7 @@ def show(df):
     # =====================================================
     st.markdown("### 📋 Ticket Classification")
 
-    total_tickets = len(df)
-
-    measurable = (
-        df[df["processing_status"].astype(str).str.strip() == "Completed"].shape[0]
-        if "processing_status" in df.columns else 0
-    )
-
-    immeasurable = (
-        df[df["processing_status"].astype(str).str.strip() == "Completed - No Inbound"].shape[0]
-        if "processing_status" in df.columns else 0
-    )
-
-    measurable_rate = (measurable / total_tickets * 100) if total_tickets else 0
+    total_tickets, measurable, immeasurable, measurable_rate = get_classification_stats(df)
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -124,12 +153,7 @@ def show(df):
     # =====================================================
     st.markdown("### 📊 Key Performance Indicators")
 
-    positive = (df_measurable["Sentiment Label"] == "Positive").sum()
-    neutral = (df_measurable["Sentiment Label"] == "Neutral").sum()
-    negative = (df_measurable["Sentiment Label"] == "Negative").sum()
-
-    avg_resolution = df_measurable["resolution_hours"].mean()
-    avg_sentiment = df_measurable["Sentiment Score"].mean()
+    positive, neutral, negative, avg_resolution, avg_sentiment = get_summary_kpis(df_measurable)
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
@@ -151,7 +175,7 @@ def show(df):
     # TICKET VOLUME TREND
     # =====================================================
     if "created" in df.columns:
-        daily = df.groupby(df["created"].dt.date).size().reset_index(name="count")
+        daily = get_summary_trends(df)
         fig = px.line(
             daily,
             x="created",
@@ -213,7 +237,7 @@ def show(df):
 
     with col_l2:
         if "LOB" in df.columns:
-            lob_counts = df["LOB"].value_counts().head(10)
+            lob_counts = get_lob_performance(df)
             fig_lob = px.bar(
                 x=lob_counts.values,
                 y=lob_counts.index,

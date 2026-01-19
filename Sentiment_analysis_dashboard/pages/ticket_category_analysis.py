@@ -4,6 +4,41 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+# =====================================================
+# CACHED COMPUTATIONS
+# =====================================================
+@st.cache_data(show_spinner=False)
+def get_category_distribution(df_subset):
+    if "Ticket Category" not in df_subset.columns:
+        return None
+    cat_counts = df_subset["Ticket Category"].value_counts().reset_index()
+    cat_counts.columns = ["Category", "Count"]
+    cat_counts["Percentage"] = (cat_counts["Count"] / cat_counts["Count"].sum() * 100).round(1)
+    return cat_counts
+
+@st.cache_data(show_spinner=False)
+def get_category_sentiment_matrix(df_subset):
+    if "Sentiment Label" not in df_subset.columns:
+        return None
+    
+    # Filter completed tickets
+    df_comp = df_subset.copy()
+    if "processing_status" in df_comp.columns:
+        df_comp = df_comp[df_comp["processing_status"] == "Completed"]
+    
+    matrix = pd.crosstab(df_comp["Ticket Category"], df_comp["Sentiment Label"])
+    col_order = [col for col in ["Negative", "Neutral", "Positive"] if col in matrix.columns]
+    return matrix[col_order]
+
+@st.cache_data(show_spinner=False)
+def get_category_risk_matrix(df_subset):
+    if "Complaint Risk Level" not in df_subset.columns:
+        return None
+    risk_by_cat = pd.crosstab(df_subset["Ticket Category"], df_subset["Complaint Risk Level"])
+    risk_order = ["Low", "Medium", "High", "Critical"]
+    risk_cols = [col for col in risk_order if col in risk_by_cat.columns]
+    return risk_by_cat[risk_cols]
+
 def show(df):
     st.title("📂 Issue Classification Analysis")
     st.markdown("Clear visibility into customer issue types, risk exposure, and resolution effectiveness")
@@ -79,9 +114,7 @@ def show(df):
     st.markdown("### 🎯 Category Distribution")
 
     if "Ticket Category" in df.columns:
-        cat_counts = df["Ticket Category"].value_counts().reset_index()
-        cat_counts.columns = ["Category", "Count"]
-        cat_counts["Percentage"] = (cat_counts["Count"] / cat_counts["Count"].sum() * 100).round(1)
+        cat_counts = get_category_distribution(df)
         
         fig_dist = px.bar(
             cat_counts,
@@ -167,20 +200,7 @@ def show(df):
     st.markdown("### 🌡️ Sentiment Heatmap by Category")
 
     if "Sentiment Label" in df_original.columns:
-        # Filter only completed tickets for sentiment analysis
-        df_completed = df_original.copy()
-        if "processing_status" in df_completed.columns:
-            df_completed = df_completed[df_completed["processing_status"] == "Completed"]
-        
-        # Create sentiment matrix with counts
-        sentiment_matrix = pd.crosstab(
-            df_completed["Ticket Category"],
-            df_completed["Sentiment Label"]
-        )
-        
-        # Reorder columns if they exist
-        col_order = [col for col in ["Negative", "Neutral", "Positive"] if col in sentiment_matrix.columns]
-        sentiment_matrix = sentiment_matrix[col_order]
+        sentiment_matrix = get_category_sentiment_matrix(df_original)
         
         fig_heat = go.Figure(data=go.Heatmap(
             z=sentiment_matrix.values,
@@ -254,15 +274,7 @@ def show(df):
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            risk_by_cat = pd.crosstab(
-                df["Ticket Category"],
-                df["Complaint Risk Level"]
-            )
-            
-            # Reorder risk levels
-            risk_order = ["Low", "Medium", "High", "Critical"]
-            risk_cols = [col for col in risk_order if col in risk_by_cat.columns]
-            risk_by_cat = risk_by_cat[risk_cols]
+            risk_by_cat = get_category_risk_matrix(df)
             
             fig_risk_stack = go.Figure()
             

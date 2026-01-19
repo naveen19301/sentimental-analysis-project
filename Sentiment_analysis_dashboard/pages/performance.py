@@ -9,8 +9,59 @@ def cache_groupby(df, group_cols, agg_dict):
     return df.groupby(group_cols).agg(agg_dict)
 
 @st.cache_data(show_spinner=False)
-def cache_filter(df, col, values):
-    return df[df[col].isin(values)]
+def get_daily_performance(df_subset):
+    if "created" not in df_subset.columns:
+        return None
+    daily = df_subset.groupby(df_subset["created"].dt.date).size().reset_index(name="count")
+    daily["MA7"] = daily["count"].rolling(7, min_periods=1).mean()
+    return daily
+
+@st.cache_data(show_spinner=False)
+def get_resolution_dist(df_subset):
+    if "resolution_hours" not in df_subset.columns:
+        return None
+    Q1 = df_subset["resolution_hours"].quantile(0.25)
+    Q3 = df_subset["resolution_hours"].quantile(0.75)
+    IQR = Q3 - Q1
+    
+    clean = df_subset[
+        (df_subset["resolution_hours"] >= Q1 - 1.5 * IQR) &
+        (df_subset["resolution_hours"] <= Q3 + 1.5 * IQR)
+    ]
+    return clean
+
+@st.cache_data(show_spinner=False)
+def get_channel_performance(df_subset):
+    if "Channel" not in df_subset.columns or "resolution_hours" not in df_subset.columns:
+        return None
+    
+    agg = {"resolution_hours": ["mean", "median", "count"]}
+    if "sentiment_score" in df_subset.columns:
+        agg["sentiment_score"] = "mean"
+
+    channel_perf = df_subset.groupby("Channel").agg(agg).reset_index()
+    channel_perf.columns = (
+        ["Channel", "Avg_Resolution", "Median_Resolution", "Ticket_Count"] +
+        (["Avg_Sentiment"] if "sentiment_score" in df_subset.columns else [])
+    )
+    return channel_perf.sort_values("Ticket_Count", ascending=False)
+
+@st.cache_data(show_spinner=False)
+def get_hourly_weekly_stats(df_subset):
+    if "created" not in df_subset.columns:
+        return None, None
+    
+    # Hour stats
+    temp = df_subset.copy()
+    temp["hour"] = temp["created"].dt.hour
+    hourly = temp.groupby("hour").size()
+    
+    # Day stats
+    temp["day"] = temp["created"].dt.day_name()
+    order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    daily = temp["day"].value_counts().reindex(order)
+    
+    return hourly, daily
 
 def show(df):
     st.title("⏱️ Performance Metrics")
@@ -89,8 +140,7 @@ def show(df):
     st.markdown("### 📈 Daily Ticket Volume")
 
     if "created" in df.columns:
-        daily = df.groupby(df["created"].dt.date).size().reset_index(name="count")
-        daily["MA7"] = daily["count"].rolling(7, min_periods=1).mean()
+        daily = get_daily_performance(df)
 
         fig_volume = go.Figure()
         fig_volume.add_trace(go.Scatter(
@@ -125,14 +175,7 @@ def show(df):
         st.markdown("### ⏱️ Resolution Time Distribution")
 
         if "resolution_hours" in df.columns:
-            Q1 = df["resolution_hours"].quantile(0.25)
-            Q3 = df["resolution_hours"].quantile(0.75)
-            IQR = Q3 - Q1
-
-            clean = df[
-                (df["resolution_hours"] >= Q1 - 1.5 * IQR) &
-                (df["resolution_hours"] <= Q3 + 1.5 * IQR)
-            ]
+            clean = get_resolution_dist(df)
 
             fig_hist = px.histogram(
                 clean,
@@ -185,17 +228,7 @@ def show(df):
     st.markdown("### 📱 Performance by Channel")
 
     if "Channel" in df.columns and "resolution_hours" in df.columns:
-        agg = {"resolution_hours": ["mean", "median", "count"]}
-        if "sentiment_score" in df.columns:
-            agg["sentiment_score"] = "mean"
-
-        channel_perf = df.groupby("Channel").agg(agg).reset_index()
-        channel_perf.columns = (
-            ["Channel", "Avg_Resolution", "Median_Resolution", "Ticket_Count"] +
-            (["Avg_Sentiment"] if "sentiment_score" in df.columns else [])
-        )
-
-        channel_perf = channel_perf.sort_values("Ticket_Count", ascending=False)
+        channel_perf = get_channel_performance(df)
 
         fig_channel = go.Figure()
 
@@ -232,12 +265,11 @@ def show(df):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### 🕐 Tickets by Hour")
-
-        if "created" in df.columns:
-            df["hour"] = df["created"].dt.hour
-            hourly = df.groupby("hour").size()
-
+    if "created" in df.columns:
+        hourly, daily = get_hourly_weekly_stats(df)
+        
+        with col1:
+            st.markdown("### 🕐 Tickets by Hour")
             fig_hour = px.line(
                 x=hourly.index,
                 y=hourly.values,
@@ -247,14 +279,8 @@ def show(df):
             fig_hour.update_layout(template="plotly_dark", height=400)
             st.plotly_chart(fig_hour, use_container_width=True)
 
-    with col2:
-        st.markdown("### 📅 Tickets by Day")
-
-        if "created" in df.columns:
-            df["day"] = df["created"].dt.day_name()
-            order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            daily = df["day"].value_counts().reindex(order)
-
+        with col2:
+            st.markdown("### 📅 Tickets by Day")
             fig_day = px.bar(
                 x=daily.index,
                 y=daily.values,
