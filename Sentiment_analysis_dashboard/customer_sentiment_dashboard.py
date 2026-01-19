@@ -5,6 +5,7 @@ import os
 import hashlib
 from pathlib import Path
 import sys
+import streamlit.components.v1 as components
 
 # =====================================================
 # PAGE CONFIG
@@ -228,13 +229,17 @@ def main():
 
     # ---------------- ROUTING WITH SCROLL TO TOP ----------------
     # Add JavaScript to scroll to top when page changes
-    st.markdown(
-        """
+    components.html(
+        f"""
         <script>
-        window.scrollTo(0, 0);
+            var mainContainer = window.parent.document.querySelector('section.main');
+            if (mainContainer) {{
+                mainContainer.scrollTo(0, 0);
+            }}
         </script>
         """,
-        unsafe_allow_html=True
+        height=0,
+        key=f"scroll_reset_{st.session_state.page}"
     )
     
     if st.session_state.page == "Summary":
