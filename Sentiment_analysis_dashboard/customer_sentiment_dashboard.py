@@ -84,7 +84,7 @@ def login_sidebar():
         st.sidebar.success(f"✅ {st.session_state.user}")
         st.sidebar.caption(f"Role: {st.session_state.role}")
 
-        if st.sidebar.button("🚪 Logout", width="stretch"):
+        if st.sidebar.button("🚪 Logout", use_container_width=True):
             st.session_state.clear()
             st.rerun()
         return True
@@ -92,7 +92,7 @@ def login_sidebar():
     with st.sidebar.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login", width="stretch")
+        submit = st.form_submit_button("Login", use_container_width=True)
 
         if submit:
             ok, role = authenticate(username, password)
@@ -216,7 +216,7 @@ def main():
         
         if st.sidebar.button(
             label, 
-            width="stretch", 
+            use_container_width=True, 
             type=button_type,
             key=button_key
         ):

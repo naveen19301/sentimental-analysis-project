@@ -111,7 +111,7 @@ def show(df):
             plot_bgcolor="rgba(0,0,0,0.2)"
         )
         
-        st.plotly_chart(fig_dist, width="stretch")
+        st.plotly_chart(fig_dist, use_container_width=True)
 
     st.markdown("---")
 
@@ -157,7 +157,7 @@ def show(df):
         margin=dict(l=20, r=100, t=60, b=40)
     )
 
-    st.plotly_chart(fig_cat, width="stretch")
+    st.plotly_chart(fig_cat, use_container_width=True)
 
     st.markdown("---")
 
@@ -204,7 +204,7 @@ def show(df):
             plot_bgcolor="rgba(0,0,0,0)"
         )
         
-        st.plotly_chart(fig_heat, width="stretch")
+        st.plotly_chart(fig_heat, use_container_width=True)
 
     st.markdown("---")    
 
@@ -241,7 +241,7 @@ def show(df):
             line=dict(width=2)
         )
         
-        st.plotly_chart(fig_box, width="stretch")
+        st.plotly_chart(fig_box, use_container_width=True)
 
     st.markdown("---")
 
@@ -303,7 +303,7 @@ def show(df):
                 )
             )
             
-            st.plotly_chart(fig_risk_stack, width="stretch")
+            st.plotly_chart(fig_risk_stack, use_container_width=True)
         
         with col2:
             # Risk gauge
@@ -343,7 +343,7 @@ def show(df):
                 font={'color': "white", 'family': "Arial"}
             )
             
-            st.plotly_chart(fig_gauge, width="stretch")
+            st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("---")
 

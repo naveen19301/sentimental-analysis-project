@@ -101,7 +101,7 @@ def show(df):
             }
         )
         fig_pie.update_layout(template="plotly_dark", height=420)
-        st.plotly_chart(fig_pie, width="stretch")
+        st.plotly_chart(fig_pie, use_container_width=True)
 
     with col_r:
         st.markdown("### 📈 Risk Trend Over Time")
@@ -122,7 +122,7 @@ def show(df):
                 }
             )
             fig_trend.update_layout(template="plotly_dark", height=420)
-            st.plotly_chart(fig_trend, width="stretch")
+            st.plotly_chart(fig_trend, use_container_width=True)
 
     st.markdown("---")
 
@@ -142,7 +142,7 @@ def show(df):
             labels=dict(x="Sentiment", y="Risk Level", color="Tickets")
         )
         fig_heat.update_layout(template="plotly_dark", height=460)
-        st.plotly_chart(fig_heat, width="stretch")
+        st.plotly_chart(fig_heat, use_container_width=True)
 
     st.markdown("---")
 
@@ -167,7 +167,7 @@ def show(df):
                     color_continuous_scale="Reds"
                 )
                 fig_cat.update_layout(template="plotly_dark", height=520)
-                st.plotly_chart(fig_cat, width="stretch")
+                st.plotly_chart(fig_cat, use_container_width=True)
 
         with col2:
             if "Channel" in risk_df.columns:
@@ -179,7 +179,7 @@ def show(df):
                     color_continuous_scale="Reds"
                 )
                 fig_ch.update_layout(template="plotly_dark", height=520)
-                st.plotly_chart(fig_ch, width="stretch")
+                st.plotly_chart(fig_ch, use_container_width=True)
 
     st.markdown("---")
 
@@ -197,7 +197,7 @@ def show(df):
 
         st.dataframe(
             risk_df.sort_values("created", ascending=False)[display_cols].head(50),
-            width="stretch",
+            use_container_width=True,
             height=420
         )
 

@@ -112,7 +112,7 @@ def show(df):
             height=450,
             hovermode="x unified"
         )
-        st.plotly_chart(fig_volume, width="stretch")
+        st.plotly_chart(fig_volume, use_container_width=True)
 
     st.markdown("---")
 
@@ -156,7 +156,7 @@ def show(df):
             )
 
             fig_hist.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_hist, width="stretch")
+            st.plotly_chart(fig_hist, use_container_width=True)
 
     with col_right:
         st.markdown("### 📊 Resolution by Sentiment")
@@ -175,7 +175,7 @@ def show(df):
                 }
             )
             fig_box.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_box, width="stretch")
+            st.plotly_chart(fig_box, use_container_width=True)
 
     st.markdown("---")
 
@@ -222,7 +222,7 @@ def show(df):
             barmode="group"
         )
 
-        st.plotly_chart(fig_channel, width="stretch")
+        st.plotly_chart(fig_channel, use_container_width=True)
 
     st.markdown("---")
 
@@ -245,7 +245,7 @@ def show(df):
                 title="Hourly Ticket Volume"
             )
             fig_hour.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_hour, width="stretch")
+            st.plotly_chart(fig_hour, use_container_width=True)
 
     with col2:
         st.markdown("### 📅 Tickets by Day")
@@ -261,7 +261,7 @@ def show(df):
                 title="Weekly Ticket Distribution"
             )
             fig_day.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_day, width="stretch")
+            st.plotly_chart(fig_day, use_container_width=True)
 
     st.markdown("---")
 

@@ -161,7 +161,7 @@ def show(df):
         )
         fig.update_traces(fill="tozeroy", line_color="#667eea", line_width=3)
         fig.update_layout(template="plotly_dark", height=400)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
 
@@ -185,7 +185,7 @@ def show(df):
             }
         )
         fig_pie.update_layout(template="plotly_dark", height=400)
-        st.plotly_chart(fig_pie, width="stretch")
+        st.plotly_chart(fig_pie, use_container_width=True)
 
     with col_r:
         funnel_df = pd.DataFrame([
@@ -202,7 +202,7 @@ def show(df):
             marker=dict(color=["#667eea", "#764ba2", "#10b981", "#f59e0b"])
         ))
         fig_funnel.update_layout(template="plotly_dark", height=400)
-        st.plotly_chart(fig_funnel, width="stretch")
+        st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("---")
 
@@ -222,7 +222,7 @@ def show(df):
                 labels={"x": "Tickets", "y": "LOB"}
             )
             fig_lob.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_lob, width="stretch")
+            st.plotly_chart(fig_lob, use_container_width=True)
 
     with col_r2:
         if "resolution_hours" in df.columns:
@@ -245,7 +245,7 @@ def show(df):
                 }
             ))
             fig_gauge.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_gauge, width="stretch")
+            st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("---")
 

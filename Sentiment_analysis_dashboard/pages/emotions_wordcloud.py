@@ -95,7 +95,7 @@ def show(df):
             title="Emotion Frequency"
         )
         fig_emo.update_layout(template="plotly_dark", height=480)
-        st.plotly_chart(fig_emo, width="stretch")
+        st.plotly_chart(fig_emo, use_container_width=True)
 
     with col2:
         st.markdown("#### 📊 Top Emotions")
@@ -122,7 +122,7 @@ def show(df):
             title="Daily Emotion Trends"
         )
         fig_trend.update_layout(template="plotly_dark", height=450)
-        st.plotly_chart(fig_trend, width="stretch")
+        st.plotly_chart(fig_trend, use_container_width=True)
 
     st.markdown("---")
 
@@ -214,7 +214,7 @@ def show(df):
         height=520,
         margin=dict(l=60, r=60, t=80, b=60)
     )
-    st.plotly_chart(fig_heat, width="stretch")
+    st.plotly_chart(fig_heat, use_container_width=True)
 
     st.markdown("---")
 

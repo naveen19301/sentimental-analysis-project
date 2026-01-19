@@ -97,7 +97,7 @@ def show(df):
             }
         )
         fig_trend.update_layout(template="plotly_dark", height=450)
-        st.plotly_chart(fig_trend, width="stretch")
+        st.plotly_chart(fig_trend, use_container_width=True)
 
     st.markdown("---")
 
@@ -118,7 +118,7 @@ def show(df):
             fig_hist.add_vline(x=avg_score, line_dash="dash", line_color="#f59e0b")
             fig_hist.add_vline(x=median_score, line_dash="dash", line_color="#10b981")
             fig_hist.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_hist, width="stretch")
+            st.plotly_chart(fig_hist, use_container_width=True)
 
     with col_right:
         if "Channel" in df.columns and "Sentiment Label" in df.columns:
@@ -144,7 +144,7 @@ def show(df):
                 height=400,
                 title="Sentiment Distribution by Channel"
             )
-            st.plotly_chart(fig_channel, width="stretch")
+            st.plotly_chart(fig_channel, use_container_width=True)
 
     st.markdown("---")
 
@@ -166,7 +166,7 @@ def show(df):
                 color_continuous_scale="Greens"
             )
             fig_pos.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_pos, width="stretch")
+            st.plotly_chart(fig_pos, use_container_width=True)
 
     with col2:
         if "Major Categories" in df.columns:
@@ -181,7 +181,7 @@ def show(df):
                 color_continuous_scale="Reds"
             )
             fig_neg.update_layout(template="plotly_dark", height=400)
-            st.plotly_chart(fig_neg, width="stretch")
+            st.plotly_chart(fig_neg, use_container_width=True)
 
     st.markdown("---")
 
@@ -224,7 +224,7 @@ def show(df):
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)"
         )
-        st.plotly_chart(fig_heat, width="stretch")
+        st.plotly_chart(fig_heat, use_container_width=True)
 
 
         # =====================================================
