@@ -95,7 +95,7 @@ def show(df):
         color_continuous_scale="viridis"
     )
     fig_owner_vol.update_layout(template="plotly_dark", height=600)
-    st.plotly_chart(fig_owner_vol, use_container_width=True)
+    st.plotly_chart(fig_owner_vol, width="stretch")
 
     st.markdown("---")
 
@@ -126,7 +126,7 @@ def show(df):
     fig_matrix.add_vline(x=owner_perf["Avg_Resolution"].median(), line_dash="dash")
     fig_matrix.update_layout(template="plotly_dark", height=550)
 
-    st.plotly_chart(fig_matrix, use_container_width=True)
+    st.plotly_chart(fig_matrix, width="stretch")
 
     st.markdown("---")
 
@@ -151,7 +151,7 @@ def show(df):
             color_continuous_scale="Greens"
         )
         fig_pos.update_layout(template="plotly_dark", height=450)
-        st.plotly_chart(fig_pos, use_container_width=True)
+        st.plotly_chart(fig_pos, width="stretch")
 
     with col_r:
         neg_agents = (
@@ -169,7 +169,7 @@ def show(df):
             color_continuous_scale="Reds"
         )
         fig_neg.update_layout(template="plotly_dark", height=450)
-        st.plotly_chart(fig_neg, use_container_width=True)
+        st.plotly_chart(fig_neg, width="stretch")
 
     st.markdown("---")
 
@@ -183,7 +183,7 @@ def show(df):
         Reopened=("Number of Reopen", lambda x: (x > 0).sum())
     ).reset_index()
 
-    st.dataframe(agent_table.round(2), use_container_width=True, height=420)
+    st.dataframe(agent_table.round(2), width="stretch", height=420)
 
     st.markdown("---")
 

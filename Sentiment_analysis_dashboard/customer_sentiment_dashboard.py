@@ -84,7 +84,7 @@ def login_sidebar():
         st.sidebar.success(f"✅ {st.session_state.user}")
         st.sidebar.caption(f"Role: {st.session_state.role}")
 
-        if st.sidebar.button("🚪 Logout", use_container_width=True):
+        if st.sidebar.button("🚪 Logout", width="stretch"):
             st.session_state.clear()
             st.rerun()
         return True
@@ -92,7 +92,7 @@ def login_sidebar():
     with st.sidebar.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login", use_container_width=True)
+        submit = st.form_submit_button("Login", width="stretch")
 
         if submit:
             ok, role = authenticate(username, password)
@@ -216,7 +216,7 @@ def main():
         
         if st.sidebar.button(
             label, 
-            use_container_width=True, 
+            width="stretch", 
             type=button_type,
             key=button_key
         ):
@@ -227,19 +227,31 @@ def main():
     # st.sidebar.markdown("---")
     # st.sidebar.info(f"📍 **Current Page:** {[k for k, v in pages.items() if v == st.session_state.page][0]}")
 
-    # ---------------- ROUTING WITH SCROLL TO TOP ----------------
-    # Add JavaScript to scroll to top when page changes
-    components.html(
+    # ---------------- ROUTING WITH ROBUST SCROLL ----------------
+    # Hidden anchor at the top of the main area
+    st.markdown('<div id="top-anchor"></div>', unsafe_allow_html=True)
+    
+    st.components.v1.html(
         f"""
         <script>
-            var mainContainer = window.parent.document.querySelector('section.main');
-            if (mainContainer) {{
-                mainContainer.scrollTo(0, 0);
+            function forceScroll() {{
+                const main = window.parent.document.querySelector('section.main');
+                if (main) {{
+                    main.scrollTo({{top: 0, behavior: 'auto'}});
+                }}
+                const anchor = window.parent.document.getElementById('top-anchor');
+                if (anchor) {{
+                    anchor.scrollIntoView();
+                }}
             }}
+            forceScroll();
+            // Repeat on a slight delay to ensure content is fully loaded
+            setTimeout(forceScroll, 50);
+            setTimeout(forceScroll, 150);
         </script>
+        <!-- State: {st.session_state.page} -->
         """,
-        height=0,
-        key=f"scroll_reset_{st.session_state.page}"
+        height=0
     )
     
     if st.session_state.page == "Summary":

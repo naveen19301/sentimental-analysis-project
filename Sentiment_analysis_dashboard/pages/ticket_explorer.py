@@ -222,7 +222,7 @@ def show(df):
 
     st.dataframe(
         filtered_df,
-        use_container_width=True,
+        width="stretch",
         height=600
     )
 
