@@ -81,7 +81,7 @@ pip install streamlit pandas plotly openpyxl
 ### Changing the Password
 Edit line 81 in `customer_sentiment_dashboard.py`:
 ```python
-if st.session_state["password"] == "sentiment2024":  # Change this password
+if st.session_state["password"] == "admin123":  # Change this password
 ```
 Replace `"sentiment2024"` with your desired password.
 
