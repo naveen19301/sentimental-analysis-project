@@ -264,7 +264,6 @@ def show(df):
     # =====================================================
     col1, col2 = st.columns(2)
 
-    with col1:
     if "created" in df.columns:
         hourly, daily = get_hourly_weekly_stats(df)
         
